@@ -1,0 +1,427 @@
+---
+title: "Chapter 6"
+author: "Nanna Bernth"
+date: "26 mar 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r + Make models}
+
+library(rethinking)
+library(brms)
+data(Howell1)
+d <- Howell1
+d$age <- (d$age - mean(d$age))/sd(d$age)
+set.seed( 1000 )
+i <- sample(1:nrow(d),size=nrow(d)/2)
+d1 <- d[ i , ]
+d2 <- d[ -i , ]
+
+
+
+flist <-  alist(
+    height ~ dnorm(mu , sigma),
+    mu <- a + b*age ,
+        a ~ dnorm( 149 , 50 ) ,
+        b ~ dnorm( 0 , 5 ) ,
+        sigma ~ dunif( 0 , 30)
+  )
+
+m6.1 <- rethinking::map(flist, data = d1)
+
+
+flist2 <-  alist(
+    height ~ dnorm(mu , sigma),
+    mu <- a + b*age + b2*age^2 ,
+        a ~ dnorm( 149 , 50 ) ,
+        b ~ dnorm( 0 , 20 ) ,
+        b2 ~ dnorm( 0 , 20 ) ,
+        sigma ~ dunif( 0 , 30 )
+  )
+
+m6.2 <- rethinking::map(flist2, data = d1)
+
+flist3 <-  alist(
+    height ~ dnorm(mu , sigma),
+    mu <- a + b*age + b2*age^2 + b3*age^3 ,
+        a ~ dnorm( 149 , 50 ) ,
+        b ~ dnorm( 0 , 20 ) ,
+        b2 ~ dnorm( 0 , 20 ) ,
+        b3 ~ dnorm( 0 , 20 ) ,
+        sigma ~ dunif( 0 , 30 )
+  )
+
+m6.3 <- rethinking::map(flist3, data = d1)
+
+flist4 <-  alist(
+    height ~ dnorm(mu , sigma),
+    mu <- a + b*age + b2*age^2 + b3*age^3 + b4*age^4 ,
+        a ~ dnorm( 149 , 50 ) ,
+        b ~ dnorm( 0 , 20 ) ,
+        b2 ~ dnorm( 0 , 20 ) ,
+        b3 ~ dnorm( 0 , 20 ) ,
+        b4 ~ dnorm( 0 , 20 ) ,
+        sigma ~ dunif( 0 , 30 )
+  )
+
+m6.4 <- rethinking::map(flist4, data = d1)
+
+flist5 <-  alist(
+    height ~ dnorm(mu , sigma),
+    mu <- a + b*age + b2*age^2 + b3*age^3 + b4*age^4 + b5*age^5 ,
+        a ~ dnorm( 149 , 50 ) ,
+        b ~ dnorm( 0 , 20 ) ,
+        b2 ~ dnorm( 0 , 20 ) ,
+        b3 ~ dnorm( 0 , 20 ) ,
+        b4 ~ dnorm( 0 , 20 ) ,
+        b5 ~ dnorm( 0 , 20 ) ,
+        sigma ~ dunif( 0 , 30 )
+  )
+
+m6.5 <- rethinking::map(flist5, data = d1)
+
+
+flist6 <-  alist(
+    height ~ dnorm(mu , sigma),
+    mu <- a + b*age + b2*age^2 + b3*age^3 + b4*age^4 + b5*age^5 + b6*age^6 ,
+        a ~ dnorm( 149 , 50 ) ,
+        b ~ dnorm( 0 , 20 ) ,
+        b2 ~ dnorm( 0 , 20 ) ,
+        b3 ~ dnorm( 0 , 20 ) ,
+        b4 ~ dnorm( 0 , 20 ) ,
+        b5 ~ dnorm( 0 , 20)  ,
+        b6 ~ dnorm( 0 , 20 ) ,
+        sigma ~ dunif( 0 , 30 )
+  )
+
+m6.6 <- rethinking::map(flist6, data = d1)
+
+```
+
+
+
+```{r + 6H1}
+comp <- (compare(models <- m6.1, m6.2, m6.3, m6.4, m6.5, m6.6 )) 
+
+```
+
+
+
+```{r + 6H2 - Predictions Model 1}
+
+#Look at the distribution of mu
+age.seq <- seq( from=-2 , to=3 , by=0.1 )
+
+#Link-function to compute mu for each sample from posterior and for each value in the sequence
+mu <- link(m6.1 , data=data.frame(age=age.seq) )
+
+
+
+#summarize the distribution of mu
+mu.mean <- apply( mu , 2 , mean )
+mu.HPDI <- apply( mu , 2 , HPDI , prob=0.97 )
+
+#simulate
+sim.height <- sim(m6.1, data = list(age = age.seq))
+height.PI <- apply(sim.height, 2, PI, prob = 0.97)
+
+#Plotting posterior prediction
+
+# plot raw data
+# fading out points to make line and interval more visible
+plot( height ~ age , data=d1 , col=col.alpha(rangi2,0.5) )
+# plot the MAP line, aka the mean mu for each weight
+lines( age.seq , mu.mean )
+# plot a shaded region for 97% HPDI
+shade( mu.HPDI , age.seq )
+# plot PI
+shade(height.PI, age.seq)
+mtext( "Model 1")
+```
+
+```{r + 6H2 - Predictions Model 2}
+#Look at the distribution of mu
+age.seq <- seq( from=-2 , to=3 , by=0.1 )
+
+#Link-function to compute mu for each sample from posterior and for each value in the sequence
+mu <- link(m6.2 , data=data.frame(age=age.seq) )
+
+
+
+#summarize the distribution of mu
+mu.mean <- apply( mu , 2 , mean )
+mu.HPDI <- apply( mu , 2 , HPDI , prob=0.97 )
+
+#simulate
+sim.height <- sim(m6.2, data = list(age = age.seq))
+height.PI <- apply(sim.height, 2, PI, prob = 0.97)
+
+#Plotting posterior prediction
+
+# plot raw data
+# fading out points to make line and interval more visible
+plot( height ~ age , data=d1 , col=col.alpha(rangi2,0.5) )
+# plot the MAP line, aka the mean mu for each weight
+lines( age.seq , mu.mean )
+# plot a shaded region for 97% HPDI
+shade( mu.HPDI , age.seq )
+# plot PI
+shade(height.PI, age.seq)
+mtext( "Model 2")
+
+```
+
+```{r + 6H2 - Predictions Model 3}
+#Look at the distribution of mu
+age.seq <- seq( from=-2 , to=3 , by=0.1 )
+
+#Link-function to compute mu for each sample from posterior and for each value in the sequence
+mu <- link(m6.3 , data=data.frame(age=age.seq) )
+
+
+#summarize the distribution of mu
+mu.mean <- apply( mu , 2 , mean )
+mu.HPDI <- apply( mu , 2 , HPDI , prob=0.97 )
+
+#simulate
+sim.height <- sim(m6.3, data = list(age = age.seq))
+height.PI <- apply(sim.height, 2, PI, prob = 0.97)
+
+#Plotting posterior prediction
+
+# plot raw data
+# fading out points to make line and interval more visible
+plot( height ~ age , data=d1 , col=col.alpha(rangi2,0.5) )
+# plot the MAP line, aka the mean mu for each weight
+lines( age.seq , mu.mean )
+# plot a shaded region for 97% HPDI
+shade( mu.HPDI , age.seq )
+# plot PI
+shade(height.PI, age.seq)
+mtext( "Model 3")
+
+```
+
+```{r + 6H2 - Predictions Model 4}
+#Look at the distribution of mu
+age.seq <- seq( from=-2 , to=3 , by=0.1 )
+
+#Link-function to compute mu for each sample from posterior and for each value in the sequence
+mu <- link(m6.4 , data=data.frame(age=age.seq) )
+
+
+
+#summarize the distribution of mu
+mu.mean <- apply( mu , 2 , mean )
+mu.HPDI <- apply( mu , 2 , HPDI , prob=0.97 )
+
+#simulate
+sim.height <- sim(m6.4, data = list(age = age.seq))
+height.PI <- apply(sim.height, 2, PI, prob = 0.97)
+
+#Plotting posterior prediction
+
+# plot raw data
+# fading out points to make line and interval more visible
+plot( height ~ age , data=d1 , col=col.alpha(rangi2,0.5) )
+# plot the MAP line, aka the mean mu for each weight
+lines( age.seq , mu.mean )
+# plot a shaded region for 97% HPDI
+shade( mu.HPDI , age.seq )
+# plot PI
+shade(height.PI, age.seq)
+mtext( "Model 4")
+
+```
+
+```{r + 6H2 - Predictions Model 5}
+#Look at the distribution of mu
+age.seq <- seq( from=-2 , to=3 , by=0.1 )
+
+#Link-function to compute mu for each sample from posterior and for each value in the sequence
+mu <- link(m6.5 , data=data.frame(age=age.seq) )
+
+
+
+#summarize the distribution of mu
+mu.mean <- apply( mu , 2 , mean )
+mu.HPDI <- apply( mu , 2 , HPDI , prob=0.97 )
+
+#simulate
+sim.height <- sim(m6.5, data = list(age = age.seq))
+height.PI <- apply(sim.height, 2, PI, prob = 0.97)
+
+#Plotting posterior prediction
+
+# plot raw data
+# fading out points to make line and interval more visible
+plot( height ~ age , data=d1 , col=col.alpha(rangi2,0.5) )
+# plot the MAP line, aka the mean mu for each weight
+lines( age.seq , mu.mean )
+# plot a shaded region for 97% HPDI
+shade( mu.HPDI , age.seq )
+# plot PI
+shade(height.PI, age.seq)
+mtext( "Model 5")
+
+```
+
+```{r + 6H2 - Predictions Model 6}
+#Look at the distribution of mu
+age.seq <- seq( from=-2 , to=3 , by=0.1 )
+
+#Link-function to compute mu for each sample from posterior and for each value in the sequence
+mu <- link(m6.6 , data=data.frame(age=age.seq) )
+
+
+
+#summarize the distribution of mu
+mu.mean <- apply( mu , 2 , mean )
+mu.HPDI <- apply( mu , 2 , HPDI , prob=0.97 )
+
+#simulate
+sim.height <- sim(m6.6, data = list(age = age.seq))
+height.PI <- apply(sim.height, 2, PI, prob = 0.97)
+
+#Plotting posterior prediction
+
+# plot raw data
+# fading out points to make line and interval more visible
+plot( height ~ age , data=d1 , col=col.alpha(rangi2,0.5) )
+# plot the MAP line, aka the mean mu for each weight
+lines( age.seq , mu.mean )
+# plot a shaded region for 97% HPDI
+shade( mu.HPDI , age.seq )
+# plot PI
+shade(height.PI, age.seq)
+mtext( "Model 6")
+
+```
+
+```{r + 6H3 -Average predictions}
+
+# compute counterfactual predictions 6.29
+# age from -3 to 3
+age.seq <- seq(from=-3,to=3,length.out=30)
+d.predict <- list(
+height = rep(0,30), # empty outcome
+age= age.seq # sequence of neocortex
+)
+
+pred.m6.4 <- link( m6.4 , data=d.predict )
+mu <- apply( pred.m6.4 , 2 , mean )
+mu.PI <- apply( pred.m6.4 , 2 , PI )
+
+
+# plot it all
+plot( height ~ age , d1 , col=rangi2 )
+lines( age.seq , mu , lty=2 )
+lines( age.seq , mu.PI[1,] , lty=2 )
+lines( age.seq , mu.PI[2,] , lty=2 )
+
+
+ensemble <- ensemble( m6.1 , m6.2 , m6.3 , m6.4, m6.5, m6.6 , data=d.predict )
+mu <- apply( ensemble$link , 2 , mean )
+mu.PI <- apply( ensemble$link , 2 , PI )
+lines( age.seq , mu )
+shade( mu.PI , age.seq )
+
+
+```
+
+```{r + 6H4 - Test-sample Deviance}
+
+# extract MAP estimates
+theta1 <- coef(m6.1)
+
+# compute deviance
+dev1 <- (-2)*sum( dnorm(d2$height ,
+mean=theta1[1]+theta1[2]*d2$age ,
+sd=theta1[3] ,
+log=TRUE ) )
+
+dev1
+
+
+# extract MAP estimates
+theta2 <- coef(m6.2)
+
+# compute deviance
+dev2 <- (-2)*sum( dnorm(d2$height ,
+mean=theta2[1]+theta2[2]*d2$age+theta2[3]*d2$age^2 ,
+sd=theta2[4] ,
+log=TRUE ) )
+
+dev2
+
+
+# extract MAP estimates
+theta3 <- coef(m6.3)
+
+# compute deviance
+dev3 <- (-2)*sum( dnorm(d2$height ,
+mean=theta3[1]+theta3[2]*d2$age+theta3[3]*d2$age^2+theta3[4]*d2$age^3 ,
+sd=theta3[5] ,
+log=TRUE ) )
+
+dev3
+
+
+# extract MAP estimates
+theta4 <- coef(m6.4)
+
+# compute deviance
+dev4 <- (-2)*sum( dnorm(d2$height ,
+mean=theta4[1]+theta4[2]*d2$age+theta4[3]*d2$age^2+theta4[4]*d2$age^3+theta4[5]*d2$age^4 ,
+sd=theta4[6] ,
+log=TRUE ) )
+
+dev4
+
+
+# extract MAP estimates
+theta5 <- coef(m6.5)
+
+# compute deviance
+dev5 <- (-2)*sum( dnorm(d2$height ,
+mean=theta5[1]+theta5[2]*d2$age+theta5[3]*d2$age^2+theta5[4]*d2$age^3+theta5[5]*d2$age^4+theta5[6]*d2$age^5,
+sd=theta5[7] ,
+log=TRUE ) )
+
+dev5
+
+
+# extract MAP estimates
+theta6 <- coef(m6.6)
+
+# compute deviance
+dev6 <- (-2)*sum( dnorm(d2$height ,
+mean=theta6[1]+theta6[2]*d2$age+theta6[3]*d2$age^2+theta6[4]*d2$age^3+theta6[5]*d2$age^4+theta6[6]*d2$age^5+theta6[7]*d2$age^6,
+sd=theta6[8] ,
+log=TRUE ) )
+
+dev6
+
+
+```
+
+
+```{r + 6H5 - Compare WAIC to Test-Sample Deviance }
+
+waic <- comp@output[1]
+waic$DEV <- c(dev4, dev6, dev5, dev3, dev2, dev1)
+
+waic$waic_sub <- round(waic$WAIC - 1926.191 ,3) 
+waic$dev_sub <- round(waic$DEV - 1876.464, 3) 
+
+#The WAIC does a good job. 
+
+```
+
+
+
